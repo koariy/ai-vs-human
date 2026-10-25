@@ -10,7 +10,6 @@
 - Git
 - GitHub
 - Visual Studio
-- C#
 
 ## Розробка
 Зміни створено у гілці develop.
