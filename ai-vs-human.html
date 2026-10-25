@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Чи може ШІ знаходити вразливості в коді краще за людину?</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#0F1117;--card:#1A1D24;--line:#2A2E39;--text:#E2E8F0;--mute:#94A3B8;--link:#7CB7F5;color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+
+html{scroll-padding-top:16px}
+
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.75 Inter,Roboto,system-ui,sans-serif;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+
+a{color:var(--link)}
+
+main{max-width:760px;margin:0 auto;padding:48px 20px 64px}
+
+h1{font-size:clamp(28px,5.5vw,40px);line-height:1.2;margin:0 0 12px;letter-spacing:-.01em}
+
+h2{font-size:24px;margin:48px 0 12px;padding-top:24px;border-top:1px solid var(--line)}
+
+h3{font-size:18px;margin:28px 0 6px}
+
+p{margin:0 0 16px}
+
+.sub{color:var(--mute);font-size:19px;margin-bottom:24px}
+
+.meta{display:flex;align-items:center;gap:14px;color:var(--mute);font-size:14px;padding-bottom:24px}
+
+.meta img{width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--card)}
+
+.meta b{color:var(--text);font-weight:600;display:block}
+
+code,pre{font-family:"JetBrains Mono",Consolas,monospace}
+
+p code{background:var(--card);border:1px solid var(--line);padding:1px 5px;font-size:.88em}
+
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0 28px}
+
+.blk{background:var(--card);border:1px solid var(--line);min-width:0}
+
+.blk .t{padding:8px 14px;font-size:13px;font-weight:600;border-bottom:1px solid var(--line)}
+
+.blk.bad{border-left:3px solid #B4474C}
+
+.blk.good{border-left:3px solid #3F8F5B}
+
+.bad .t{color:#F0A3A6}.good .t{color:#8FD3A8}
+
+pre{margin:0;padding:12px 14px;overflow-x:auto;font-size:13px;line-height:1.6;tab-size:2}
+
+.quote{background:var(--card);border:1px solid var(--line);padding:18px 20px;margin:18px 0;display:flex;gap:18px;align-items:flex-start}
+
+.quote blockquote{margin:0 0 8px}
+
+.quote cite{font-size:14px;color:var(--mute);font-style:normal}
+
+sup a{text-decoration:none;font-size:.75em}
+
+ol.refs{padding-left:22px;font-size:15px;color:var(--mute)}
+
+ol.refs li{margin-bottom:10px;padding-left:4px}
+
+ol.refs a{word-break:break-word}
+
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:var(--mute);font-size:14px}
+
+:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+@media(max-width:700px){.pair{grid-template-columns:1fr}.quote{flex-direction:column;gap:12px}body{font-size:16px}main{padding-top:32px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Чи може ШІ знаходити вразливості в коді краще за людину?</h1>
+  <p class="sub">Студентська розвідка: порівнюємо ручний рев'ю коду та автоматизовану перевірку нейромережами.</p>
+  <div class="meta"><div>25 жовтня 2026 · <span>~5 хв читання</span></div></div>
+</header>
+
+<section>
+  <h2 style="border-top:0;padding-top:0;margin-top:8px">Як виникла ця ідея</h2>
+  <p>Коли я вперше сгодував ChatGPT шматок коду з курсової й він за секунду показав мені забудькувату помилку, у голові одразу виникло питання: "А навіщо тоді взагалі сидіти й годинами рев'ювити код вручну?". Здавалося, що професія рев'юера чи сек'юріті-аудитора тепер під загрозою. Але коли почав копати глибше під час підготовки цієї теми, виявилося, що все набагато цікавіше й не так однозначно.</p>
+  <p>Найбільше дивує інше: класичні загрози на кшталт SQL-ін’єкцій або XSS висять у топі <span lang="en">OWASP Top 10</span> вже не один десяток років.<sup><a href="#r1">[1]</a></sup> Про них знають усі, про них пишуть у кожному підручнику, але ми все одно продовжуємо допускати ці самі дитячі помилки у своїх проєктах.</p>
+
+  <h2>Де людина все ще сильніша</h2>
+  <p>Головна суперсила людини-аудитора — це розуміння бізнес-логіки. Нейромережа бачить тільки синтаксис, а людина розуміє, <i>навіщо</i> цей код написаний. Наприклад, якщо в умовному навчальному інтернет-магазині можна спокійно підмінити ціну товару через параметр у запиті й купити щось за нуль гривень — з точки зору коду все ідеально: змінні передаються, типи збігаються, помилок немає. Тільки людина зможе здогадатися, що тут є діра в логіці.</p>
+  <p>Але у людей є величезний мінус — ми банально втомлюємося. Коли сидиш над кодом уже третю годину поспіль (особливо десь о другій ночі перед дедлайном), очі замилюються, увага падає, і навіть очевидна склейка рядків у SQL-запиті починає здаватися нормальним рішенням. До того ж людський фактор робить перевірку суб'єктивною: один студент чи розробник помітить баг, а інший — пропустить.</p>
+
+  <h2>У чому перевага штучного інтелекту</h2>
+  <p>ШІ в цьому плані працює як робот-невтомник: йому байдуже, скільки зараз годин, він перевіряє тисячі рядків за лічені секунди й однаковий за точністю як на першому файлі, так і на сотому. Типові штамповані вразливості він клацає як горішки — відразу підкаже, де ми забули провалідувати вхідні дані або виставили критичні ключі прямо в код. І головне — він не просто каже "тут помилка", а й відразу пропонує готове виправлення.</p>
+  <p>Але сліпо довіряти йому точно не варто. Головні проблеми ШІ — це галюцинації та обмежене контекстне вікно. Модель може з максимально впевненим виглядом вигадати діру там, де її немає, або навпаки — прогледіти небезпеку, якщо вона розмазана по кількох різних файлах проєкту. Крім того, самі джерела показують: якщо розробник повністю покладається на ШІ-автодоповнення, свіжонаписаний код часто містить баги з безпеки.<sup><a href="#r5">[5]</a></sup><sup><a href="#r6">[6]</a></sup> Для таких випадків вже навіть створили окремий перелік ризиків.<sup><a href="#r2">[2]</a></sup></p>
+
+  <h2>Мій висновок</h2>
+  <p>Сформулювати чітке "ШІ повністю замінить людину" тут не виходить. Замість змагання краще працює зв'язка: ШІ виконує брудну та рутинну роботу, за секунди проганяючи базові перевірки, а людина включає мізки там, де потрібна логіка, розуміння архітектури та перевірка відповідей самого ШІ.</p>
+  <p><i>Зауваження: цей матеріал є оглядом існуючих джерел і статей, а не моїм власним повноцінним лабораторним дослідженням з точними вимірами у відсотках.</i></p>
+</section>
+
+<section>
+  <h2>Приклади з практики</h2>
+  <p>Ось два класичних приклади вразливостей, які найчастіше розбираються на заняттях з безпеки, та варіанти, як їх правильно закрити.</p>
+  <h3>1. SQL-ін’єкція (Python, Flask + sqlite3)</h3>
+  <div class="pair">
+    <div class="blk bad"><div class="t">Як робити НЕ треба</div><pre><code>@app.route("/search")
+def search():
+    q = request.args.get("q", "")
+    cur = db.cursor()
+    # Конкатенація рядків — прямий шлях до проблеми
+    cur.execute("SELECT id, title FROM books WHERE title LIKE '%" + q + "%'")
+    return jsonify(cur.fetchall())
+
+# Якщо ввести q = ' OR '1'='1  -> база віддасть усе підряд</code></pre></div>
+    <div class="blk good"><div class="t">Як зробити правильно</div><pre><code>@app.route("/search")
+def search():
+    q = request.args.get("q", "")
+    cur = db.cursor()
+    # Параметризований запит: sqlite сам безпечно підставить значення
+    cur.execute("SELECT id, title FROM books WHERE title LIKE ?",
+                ("%" + q + "%",))
+    return jsonify(cur.fetchall())</code></pre></div>
+  </div>
+  <h3>2. Міжсайтовий скриптинг / XSS (JavaScript)</h3>
+  <div class="pair">
+    <div class="blk bad"><div class="t">Вразливий варіант</div><pre><code>// Вивід коментаря на сторінку через innerHTML
+function showComment(c) {
+  const box = document.getElementById("comments");
+  box.innerHTML += "&lt;p&gt;&lt;b&gt;" + c.author + "&lt;/b&gt;: " + c.text + "&lt;/p&gt;";
+}
+
+// Якщо c.text = &lt;img src=x onerror=alert(1)&gt; -> скрипт виконається в браузері</code></pre></div>
+    <div class="blk good"><div class="t">Безпечний варіант</div><pre><code>function showComment(c) {
+  const box = document.getElementById("comments");
+  const p = document.createElement("p");
+  const name = document.createElement("b");
+  name.textContent = c.author;       // Безобідний текст, без виконання HTML
+  p.append(name, ": " + c.text);
+  box.appendChild(p);
+}</code></pre></div>
+  </div>
+</section>
+
+<section>
+  <h2>На які стандарти можна спиратися</h2>
+  <p>Короткий переказ головних думок з офіційних гайдів та документів, які я використовував під час розбору теми:</p>
+
+  <div class="quote">
+    <div>
+      <blockquote>Документ виділяє головні загрози при роботі з LLM — від Prompt Injection до сліпої довіри до згенерованого коду. Головне правило: будь-який результат від ШІ потрібно сприймати критично й обов'язково перевіряти.</blockquote>
+      <cite><span lang="en">OWASP Top 10 for LLM Applications</span> (короткий зміст)<sup><a href="#r2">[2]</a></sup></cite>
+    </div>
+  </div>
+
+  <div class="quote">
+    <div>
+      <blockquote>Американський стандарт рекомендує підходити до ризиків ШІ системно через 4 кроки: <span lang="en">Govern, Map, Measure, Manage</span> (Правила, Пошук ризиків, Оцінка та Керування).</blockquote>
+      <cite><span lang="en">NIST AI Risk Management Framework 1.0</span> (короткий зміст)<sup><a href="#r3">[3]</a></sup></cite>
+    </div>
+  </div>
+
+  <div class="quote">
+    <div>
+      <blockquote>У гайдах GitHub детально описано концепцію автоматичного сканування коду (Code Scanning), коли перевірка безпеки вбудовується прямо в процес розробки та CI/CD.</blockquote>
+      <cite><span lang="en">GitHub Docs: Code scanning</span> (короткий зміст)<sup><a href="#r4">[4]</a></sup></cite>
+    </div>
+  </div>
+</section>
+
+<section id="references">
+  <h2>Використані джерела</h2>
+  <ol class="refs">
+    <li id="r1"><span lang="en">OWASP Foundation. <i>OWASP Top 10</i>.</span> <a href="https://owasp.org/Top10/" target="_blank" rel="noopener">owasp.org/Top10</a></li>
+    <li id="r2"><span lang="en">OWASP Foundation. <i>OWASP Top 10 for Large Language Model Applications</i>.</span> <a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/" target="_blank" rel="noopener">owasp.org/www-project-top-10-for-large-language-model-applications</a></li>
+    <li id="r3"><span lang="en">NIST (2023). <i>Artificial Intelligence Risk Management Framework (AI RMF 1.0)</i>, NIST AI 100-1.</span> <a href="https://doi.org/10.6028/NIST.AI.100-1" target="_blank" rel="noopener">doi.org/10.6028/NIST.AI.100-1</a></li>
+    <li id="r4"><span lang="en">GitHub Docs. <i>About code scanning</i>.</span> <a href="https://docs.github.com/en/code-security/code-scanning" target="_blank" rel="noopener">docs.github.com/en/code-security/code-scanning</a></li>
+    <li id="r5"><span lang="en">Pearce, H. et al. (2021). <i>Asleep at the Keyboard? Assessing the Security of GitHub Copilot’s Code Contributions</i>. arXiv:2108.09293.</span> <a href="https://arxiv.org/abs/2108.09293" target="_blank" rel="noopener">arxiv.org/abs/2108.09293</a></li>
+    <li id="r6"><span lang="en">Perry, N. et al. (2022). <i>Do Users Write More Insecure Code with AI Assistants?</i> arXiv:2211.03622.</span> <a href="https://arxiv.org/abs/2211.03622" target="_blank" rel="noopener">arxiv.org/abs/2211.03622</a></li>
+  </ol>
+</section>
+
+<footer>Студентський навчальний матеріал. Підготовлено у дослідницьких цілях.</footer>
+</main>
+</body>
+</html>
